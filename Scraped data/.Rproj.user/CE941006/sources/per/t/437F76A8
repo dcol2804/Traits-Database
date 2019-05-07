@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1541113721723.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "437F76A8",
+    "lastKnownWriteTime" : 7308604914264011873,
+    "last_content_update" : 1541113721723,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "4C9FE7F4",
+        "caption" : "soil1",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=soil1&cache_key=4C9FE7F4",
+        "displayedObservations" : 348,
+        "environment" : "",
+        "object" : "soil1",
+        "preview" : 0,
+        "totalObservations" : 348,
+        "variables" : 4
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

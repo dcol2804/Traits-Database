@@ -1,0 +1,166 @@
+#####################################################################################################################################
+###############################################          READ TRAIT DATA              ###############################################
+#####################################################################################################################################
+
+
+
+
+
+#######Packages we need: 
+#install.packages("tidyr")
+library(tidyr)
+library(dplyr)
+
+
+#read in the 4 data bases with identicle headings but some with blank columns from the Scraped_data: Raw_data, data_for_comparisons
+UoF <- read.csv("./data_for_comparisons/UoF.csv")
+SWPS <- read.csv("./data_for_comparisons/SWPS.csv")
+PSP1 <- read.csv("./data_for_comparisons/PSP1.csv")
+PSP2 <- read.csv("./data_for_comparisons/PSP2.csv")
+
+
+### Find the species that are common between the three groups. 
+#(I've checked to see if there were more matches between the one psp than the other)
+#I won't use this list as there are no traits that are in common with only these two database
+UoF_SWPSlist = intersect(UoF$species,SWPS$species)
+
+
+#I'll use all these other lists
+#This will be used for soil type
+UoF_SWPS_PSP1list = intersect(UoF_SWPSlist,PSP1$species)
+
+
+#This will be used for light level
+UoF_SWPS_PSP2list = intersect(UoF_SWPSlist,PSP2$species)
+# this will be used for drought and coastal tolerance
+UoF_PSP1list      = intersect(UoF$species, PSP1$species)
+#this will be used for supp_ watering and frost tolerance
+PSP1_SWPSlist     = intersect(PSP1$species, SWPS$species)
+
+#now make the databases
+#soil_type analysis
+UoF_SWPS_PSP1 = rbind(UoF[UoF$species %in% UoF_SWPS_PSP1list,], 
+                      SWPS[SWPS$species %in% UoF_SWPS_PSP1list,], 
+                      PSP1[PSP1$species %in% UoF_SWPS_PSP1list,])
+
+#light level analysis
+UoF_SWPS_PSP2 = rbind(UoF[UoF$species %in% UoF_SWPS_PSP2list,], 
+                      SWPS[SWPS$species %in% UoF_SWPS_PSP2list,], 
+                      PSP2[PSP2$species %in% UoF_SWPS_PSP2list,])
+#drought tolerance and coastal tolerance
+UoF_PSP1      = rbind(UoF[UoF$species %in% UoF_PSP1list,], 
+                      PSP1[SWPS$species %in% UoF_PSP1list,])
+#supp watering and frost tolerance
+PSP1_SWPS     = rbind(PSP1[PSP1$species %in% PSP1_SWPSlist,], 
+                      SWPS[SWPS$species %in% PSP1_SWPSlist,])
+
+
+####Stack the data
+#make the species column a factor in all dfs
+UoF_SWPS_PSP1$species = factor(UoF_SWPS_PSP1$species)
+UoF_SWPS_PSP2$species = factor(UoF_SWPS_PSP2$species)
+UoF_PSP1$species      = factor(UoF_PSP1$species)
+PSP1_SWPS$species     = factor(PSP1_SWPS$species)
+
+#change the column order in all the dataframes
+UoF_SWPS_PSP1 = UoF_SWPS_PSP1[,c(14,1:length(UoF_SWPS_PSP1)-1)]
+UoF_SWPS_PSP2 = UoF_SWPS_PSP2[,c(14,1:length(UoF_SWPS_PSP2)-1)]
+UoF_PSP1      = UoF_PSP1[,c(14,1:length(UoF_PSP1)-1)]
+PSP1_SWPS     = PSP1_SWPS[,c(14,1:length(PSP1_SWPS)-1)]
+
+#now convert into long form
+UoF_SWPS_PSP1long = gather(UoF_SWPS_PSP1, Trait, data, drought_tolerance:length(UoF_SWPS_PSP1), factor_key=TRUE)
+UoF_SWPS_PSP2long = gather(UoF_SWPS_PSP2, Trait, data, drought_tolerance:length(UoF_SWPS_PSP2), factor_key=TRUE)
+UoF_PSP1long      = gather(UoF_PSP1, Trait, data, drought_tolerance:length(UoF_PSP1), factor_key=TRUE)
+PSP1_SWPSlong     = gather(PSP1_SWPS, Trait, data, drought_tolerance:length(PSP1_SWPS), factor_key=TRUE)
+
+
+#cleanout rows with blanks and NAs
+UoF_SWPS_PSP1long$data[UoF_SWPS_PSP1long$data == ""] = NA
+UoF_SWPS_PSP1long = UoF_SWPS_PSP1long %>% drop_na(data)
+
+UoF_SWPS_PSP2long$data[UoF_SWPS_PSP2long$data == ""] = NA
+UoF_SWPS_PSP2long = UoF_SWPS_PSP2long %>% drop_na(data)
+
+UoF_PSP1long$data[UoF_PSP1long$data == ""] = NA
+UoF_PSP1long = UoF_PSP1long %>% drop_na(data)
+
+PSP1_SWPSlong$data[PSP1_SWPSlong$data == ""] = NA
+PSP1_SWPSlong = PSP1_SWPSlong %>% drop_na(data)
+
+
+########################################
+## homogenise light_level1, 2 and 3 and soil_type1, 2 and 3. YOu need to change the Trait column to a character to alter the values unfortunately
+## change the Trait level to a factor
+UoF_SWPS_PSP1long$Trait = as.character(UoF_SWPS_PSP1long$Trait)
+UoF_SWPS_PSP2long$Trait = as.character(UoF_SWPS_PSP2long$Trait)
+UoF_PSP1long$Trait      = as.character(UoF_PSP1long$Trait)
+PSP1_SWPSlong$Trait     = as.character(PSP1_SWPSlong$Trait)
+
+
+## DF1 - soil
+UoF_SWPS_PSP1long$Trait[UoF_SWPS_PSP1long$Trait == "light_level1"] = "light_level"
+UoF_SWPS_PSP1long$Trait[UoF_SWPS_PSP1long$Trait == "light_level2"] = "light_level"
+UoF_SWPS_PSP1long$Trait[UoF_SWPS_PSP1long$Trait == "light_level3"] = "light_level"
+
+UoF_SWPS_PSP1long$Trait[UoF_SWPS_PSP1long$Trait == "soil_type1"] = "soil_type"
+UoF_SWPS_PSP1long$Trait[UoF_SWPS_PSP1long$Trait == "soil_type2"] = "soil_type"
+UoF_SWPS_PSP1long$Trait[UoF_SWPS_PSP1long$Trait == "soil_type3"] = "soil_type"
+
+#DF2- light level
+UoF_SWPS_PSP2long$Trait[UoF_SWPS_PSP2long$Trait == "light_level1"] = "light_level"
+UoF_SWPS_PSP2long$Trait[UoF_SWPS_PSP2long$Trait == "light_level2"] = "light_level"
+UoF_SWPS_PSP2long$Trait[UoF_SWPS_PSP2long$Trait == "light_level3"] = "light_level"
+
+UoF_SWPS_PSP2long$Trait[UoF_SWPS_PSP2long$Trait == "soil_type1"] = "soil_type"
+UoF_SWPS_PSP2long$Trait[UoF_SWPS_PSP2long$Trait == "soil_type2"] = "soil_type"
+UoF_SWPS_PSP2long$Trait[UoF_SWPS_PSP2long$Trait == "soil_type3"] = "soil_type"
+#DF3- drought and coastal tolerance
+UoF_PSP1long$Trait[UoF_PSP1long$Trait == "light_level1"] = "light_level"
+UoF_PSP1long$Trait[UoF_PSP1long$Trait == "light_level2"] = "light_level"
+UoF_PSP1long$Trait[UoF_PSP1long$Trait == "light_level3"] = "light_level"
+
+UoF_PSP1long$Trait[UoF_PSP1long$Trait == "soil_type1"] = "soil_type"
+UoF_PSP1long$Trait[UoF_PSP1long$Trait == "soil_type2"] = "soil_type"
+UoF_PSP1long$Trait[UoF_PSP1long$Trait == "soil_type3"] = "soil_type"
+
+#DF4- watering and frost tolernace
+PSP1_SWPSlong$Trait[PSP1_SWPSlong$Trait == "light_level1"] = "light_level"
+PSP1_SWPSlong$Trait[PSP1_SWPSlong$Trait == "light_level2"] = "light_level"
+PSP1_SWPSlong$Trait[PSP1_SWPSlong$Trait == "light_level3"] = "light_level"
+
+PSP1_SWPSlong$Trait[PSP1_SWPSlong$Trait == "soil_type1"] = "soil_type"
+PSP1_SWPSlong$Trait[PSP1_SWPSlong$Trait == "soil_type2"] = "soil_type"
+PSP1_SWPSlong$Trait[PSP1_SWPSlong$Trait == "soil_type3"] = "soil_type"
+
+
+
+###Finally we can get to look at duplicates
+##subset the data that contains each trait
+#soil
+soil     = UoF_SWPS_PSP1long[which(UoF_SWPS_PSP1long$Trait == "soil_type"),]
+#light
+light    = UoF_SWPS_PSP2long[which(UoF_SWPS_PSP1long$Trait == "light_level"),]
+#drought
+drought  = UoF_PSP1long[which(UoF_PSP1long$Trait == "drought_tolerance"),]
+#coastal
+coastal  = UoF_PSP1long[which(UoF_PSP1long$Trait == "coastal_tolerance"),]
+#supp_watering
+watering = PSP1_SWPSlong[which(PSP1_SWPSlong$Trait == "supp_watering"),]
+#frost_tolerance
+frost    = PSP1_SWPSlong[which(PSP1_SWPSlong$Trait == "frost_tolerance"),]
+## remove cultivars. I'm assuming the cultivars will be similar to the species for the traits. 
+soil1    = distinct(soil, source, species, Trait, data)
+light1   = distinct(light, source, species, Trait, data)
+drought1 = distinct(drought, source, species, Trait, data)
+coastal1 = distinct(coastal, source, species, Trait, data)
+watering1= distinct(watering, source, species, Trait, data)
+frost1   = distinct(frost, source, species, Trait, data)
+#############################################################################
+
+
+
+
+
+
+
