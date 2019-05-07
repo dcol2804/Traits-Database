@@ -1,3 +1,6 @@
+#################################################################################################################
+#################################################################################################################
+
 # This code combines all the scraped data into one big database.
 # It cleans the species names using the "taxize" R package
 # It imports the manually collected database and merges the two together
